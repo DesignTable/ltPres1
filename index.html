@@ -18,11 +18,11 @@
 
     <!-- If the query includes 'print-pdf', use the PDF print sheet -->
 <!-- turn on only for pdf export -->
-<!--
+
     <script>
       document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css">' );
     </script>
--->
+
 
 
 	<!--Add support for earlier versions of Internet Explorer -->
@@ -119,9 +119,9 @@ tarball. That tarball expands into 155 meg of node-webkit and plugins.</p>
 			  </section>
 			</section>
 
-			<section id="part-1">
+			<section id="node_webkit">
 			  <section>
-			    <h3>Part 1: Dance of the Matryoshkas</h3>
+			    <h3>Dance of the Matryoshkas</h3>
 			    <img src="images/Matryoshka-Dolls.jpg" alt="Matryoshka Dolls">
 			  </section>
 			  <section>
@@ -140,27 +140,27 @@ callback-heavy coding style it uses.</p>
 			  </section>
 			  <section data-state="diagram-nw">
 			    <h2>Node-Webkit</h2>
-			    <div id="diagram-nw">
+			    <div id="diagram-nw"></div>
 			  </section>
 			  <section data-state="diagram-nw-plugins">
 			    <h3>Node-Webkit supports plugins.</h3>
 			    <p>Light Table is a Node-Webkit plugin.</p>
 			    <p>Node-Webkit plugins can contain nested plugins</p>
-			    <div id="diagram-nw-plugins">
+			    <div id="diagram-nw-plugins"></div>
 			  </section>
 			  <section data-state="diagram-lighttable-plugins">
 			    <h3>LightTable has plugins.</h3>
 			    <p>Clojure support is provided by a Light Table plugin.</p>
-			    <div id="diagram-lighttable-plugins">
+			    <div id="diagram-lighttable-plugins"></div>
 			  </section>
 			  <section data-state="diagram-lighttable-user-plugins">
 			    <h3>LightTable has user plugins.</h3>
 			    <p>User plugins can override system plugins.</p>
-			    <div id="diagram-lighttable-user-plugins">
+			    <div id="diagram-lighttable-user-plugins"></div>
 			  </section>
 			  <section data-state="diagram-lighttable-clients">
 			    <h3>Light Table plugins can inject code into client processes.</h3>
-			    <div id="diagram-lighttable-clients">
+			    <div id="diagram-lighttable-clients"></div>
 			  </section>
 
 			  <section>
@@ -230,7 +230,7 @@ event processing. bootstrap.js is Light Table compiled.
 			  </section>
 
 			  <section>
-			    <h2>Part 2: Objects, but not all the way down</h2>
+			    <h2>Objects, but not all the way down</h2>
 			  </section>
 
 			  <section>
@@ -274,7 +274,7 @@ default values for the object, and an initialization function.</p>
 			</section>
 			<section id="part-3">
 			  <section>
-			    <h3>Part 3: Activating the Model</h3>
+			    <h3>Animating the Model</h3>
 			  </section>
 			  <section>
 			    <h3>Commands</h3>
@@ -336,10 +336,11 @@ Command functions bound to keys take no arguments. Commands invoked from code (c
 			  </section>
 			  <section>
 			    <h3>Keymaps Bind Commands to Tags</h3>
+<p>Tags act as "scopes" for keyboard commands.</p>
 <p>from default.keymap:</p>
 <code><pre class="clojure" data-trim>
 {:+ {:app {"pmeta-r" [:refresh-connected-browser]
-           "pmeta-shift-n" [:window.new]
+           "pmeta-shift-n" [:window.new]}}}
 </pre></code>
 <p>For objects tagged <b>:app</b>, the command :window.new is bound to the
 key sequence "pmeta-shift-n". Only the singleton app object carries the :app
@@ -347,7 +348,7 @@ tag; it has global scope.</p>
 <p>These commands only apply in the document search input section of the sidebar:</p>
 <code><pre class="clojure" data-trim>
 {:+ {:sidebar.doc.search.input {"enter" [:docs.search.exec]
-                                "esc" [:docs.search.hide]}}
+                                "esc" [:docs.search.hide]}}}
 </pre></code>
 
 			  </section>
@@ -355,29 +356,104 @@ tag; it has global scope.</p>
 			    <h3>Binding Behaviors to Tags</h3>
 <p>from default.behaviors:</p>
 <code><pre class="clojure" data-trim>
-{
- :+
+{:+
  {:app [:lt.objs.clients.local/startup-with-local-client
         :lt.objs.app/focus-class]}}
 </pre></code>
+<p>Here we bind 2 behaviors to the tag :app.</p>
 
 			  </section>
 			  <section>
 			    <h3>Raising a Trigger</h3>
-<p>Events to triggers, see editor</p>
+<code><pre class="clojure" data-trim>
+(object/raise obj :trigger arg1 arg2)
+</pre></code>
+<p>Here's a simplified view of the event handling mechanic in Light Table:</p>
+<pre>
+For each of <i>obj</i>'s tags,
+    for each behavior activated on :trigger
+        execute that behavior reaction, passing obj and any args
+</pre>
+
 			  </section>
 			</section>
 			<section>
 			  <section>
-			    <h2>Advanced Tags</h2>
-			    <h3>Variations on a Theme</h3>
-<p>dynamic tags, specificity</p>
+			    <h2>Advanced Features</h2>
+			    <h3>1. Dynamic Tags</h3>
+<p>Tags can be added or removed from objects dynamically. When this happens,
+behaviors and commands bound to those tags are attached or detached from the
+object.</p>
+
+<p>Here's one way this feature is used:</p>
+
+<p>The tag :files is associated with an object that maintains a registry mapping extensions to tags.</p>
+
+<p>It maps, for example, the extension ".behaviors" to the tag ":editor.behaviors".
+When an editor is created to edit a file with extension ".behaviors", the editor will be dynamically tagged ":editor.behaviors", and there are some specific behaviors that come along with that tag.</p>
 			  </section>
-			</section>
-			<section id="advanced features">
 			  <section>
-			    <h3>Some Advanced Features</h3>
-<p>reloading classes, :exclusive, :throttle, :debounce</p>
+			    <h3>Extending a Registry</h3>
+<p>Behaviors are used to make the :files registry extensible.</p>
+
+<p>A language plugin can extend this registry by binding a behavior to the :files tag that responds to the trigger :lt.objs.files/file-types.</p>
+
+<p>After plugins are loaded, :lt.objs.files/file-types is raised on the :files object, and all listeners add their extension to tag mappings.</p>
+
+<p>The Clojure plugin, for example, uses this technique to map the ".cljs" extension to the tag :editor.cljs.</p>
+
+<p>From clojure.behaviors:</p>
+<pre><code class="clojure" data-trim>
+{:+
+  {:files [(:lt.objs.files/file-types
+             [{:name "Clojure" :exts [:clj] :mime "text/x-clojure"
+                  :tags [:editor.clj :editor.clojure]}
+              {:name "ClojureScript" :exts [:cljs] :mime "text/x-clojurescript"
+                  :tags [:editor.cljs :editor.clojurescript]}])]}}
+</code></pre>
+			  </section>
+			  <section>
+			    <h3>2. Tag Specificity</h3>
+<p>Tags are more specific if they have more parts. Periods divide tags into parts.</p>
+
+<p>:editor.clj (two parts, 1 period) is more specific than :editor.</p>
+
+<p>Behaviors bound to more specific tags take precedence over behaviors
+bound to less specific tags.</p>
+
+			    <h3>3. Exclusive Behavior</h3>
+<p>If a behavior has the property :exclusive set to true, then other behaviors
+of the same name are ignored.</p>
+			  </section>
+			  <section>
+			    <h3>Constructing an Override</h3>
+<p>Dynamic tags, registry extension, tag specificity and exclusive behavior can
+be combined to override behaviors.</p>
+
+<p>As we've seen, the Clojure plugin can arrange for editors of .cljs files to
+be tagged :editor.cljs</p>
+
+<p>Let's say there's a behavior <i>b</i> bound to :editor.</p>
+
+<p>The Clojure plugin can introduce a new behavior <i>b</i> bound to the
+more specific tag :editor.cljs. If the new behavior is marked :exclusive true,
+then it will block less specific behaviors <i>b</i>, like the one bound to
+:editor.</p>
+			  </section>
+			  <section>
+			    <h3>4. instant Behavior</h3>
+<p>If a behavior is given the trigger :object.instant,
+then it is executed immediately after being loaded,
+rather than waiting for the object to raise the trigger.</p>
+
+<p>In effect, an :object.instant behavior acts as a directive.</p>
+<p>Here's an extract from my user.behaviors file:</p>
+<pre><code class="clojure" data-trim>
+{:+ {:editor [(:lt.objs.style/font-settings "Anonymous Pro" 14 1)]
+}}
+</code></pre>
+<p>The font is set immediately after user.behaviors are loaded,
+font-settings is not actually bound to :editor.</p>
 			  </section>
 			</section>
 			<section>
@@ -392,19 +468,27 @@ becomes their :content.</p>
 <p>Objects are not garbage collected, and must be explicitly destroyed.</p>
 
 <p>WeakMap support is available for node-webkit (https://github.com/rogerwang/node-webkit/issues/298), and Light Table might be able to use it. It would require revalidating the object model.</p>
-			    <h3>Reserved object keys</h3>
-::id
-::type
-:args
-:content
-:behaviors #{} :tags #{} :triggers [] :listeners {} ::type name :children {}
-
-:name "myName"
-:throttle msec
-:debounce msec
 			  </section>
 			  <section>
-			    <h4>Key Functions</h4>
+			    <h3>Reserved Object keys</h3>
+<p>Set by Light Table:</p>
+<br/>::id
+<br/>::type
+<br/>:args
+<br/>:content
+<br/>:behaviors #{} :tags #{} :triggers [] :listeners {} :children {}
+<p>Can be set by user:</p>
+<br/>:name "myName"
+
+			  </section>
+			  <section>
+			    <h3>Reserved Behavior Keys</h3>
+:exclusive true
+<br/>:throttle msec
+<br/>:debounce msec
+			  </section>
+			  <section>
+			    <h4>Important Functions</h4>
 <p>The following namespace definition is conventional in the LightTable code base:</p>
 <code><pre data-trim>
 (ns myPlugin
@@ -426,56 +510,21 @@ becomes their :content.</p>
 			    </section>
 			    <section>
 			      <h3>Other Functions</h3>
-			      <table>
-			      <tr><td>object/instances-by-type</td></tr>
-			      <tr>
+			      <h4>Lookup</h4>
+			      object/instances-by-type
+			      <h4>Message Send</h4>
 				object/raise
-			      </tr>
-			      <tr>
+			      <h4>Object Modification</h4>
 				object/refresh!
-			      </tr>
-			      object/destroy!
-			      <tr>
-				object/merge!
-				object/update!
-				object/assoc-in!
-				do not refresh
-			      </tr>
-			      </table>
+			      <br/>object/destroy!
+<br/>object/merge!, object/update!, object/assoc-in!
+<br/> --these should be followed by refresh!
 			    </section>
 			  </section>
 			</section>
-			<section id="part-4">
+			<section id="Building Plugins">
 			  <section>
-			    <h3>Part 4: Follow the Flow of Control</h3>
-			  </section>
-			  <section>
-			    <h3>Searching Documentation</h3>
-			    <h4>Opening the Search sidebar</h4>
-from default.keymap:
-<code><pre data-trim>
-{:+ {:app {"ctrl-shift-d" [:docs.search.show]}
-     :sidebar.doc.search.input {"enter" [:docs.search.exec]
-                                "esc" [:docs.search.hide]}}}
-</pre></code>
-
-from plugin/doc.cljs
-<code><pre data-trim>
-(cmd/command {:command :docs.search.show
-              :desc "Docs: Search language docs"
-              :exec (fn [force?]
-                      (when doc-search
-                        (object/raise sidebar/rightbar :toggle doc-search {:force? force?})
-                        (object/raise doc-search :focus!))
-                      )})
-</pre></code>
-Raise the right sidebar and raise the search bar.
-			  </section>
-			</section>
-
-			<section id="part-5">
-			  <section>
-			    <h1>Part 5: Building Plugins</h1>
+			    <h1>Building Plugins</h1>
 			    <h3>LightTable is Optimized for Writing LightTable</h3>
 			  </section>
 
@@ -571,7 +620,7 @@ plugin0.behaviors -- referenced in the manifest
 <pre><code class="clojure" data-trim>
 {:+ {:app [(:lt.objs.plugins/load-js ["plugin0_compiled.js"])
            (:lt.objs.plugins/load-keymap "plugin0.keymap")]
-     :plugin0.panel [:lt.plugins.plugin0/destroy-on-close]}
+     :plugin0.panel [:dt.plugins.plugin0/destroy-on-close]}
 }
 </code></pre>
 <p>
@@ -590,7 +639,7 @@ plugin0.keymap -- referenced in plugin0.behaviors
 </p>
 
 <pre><code class="clojure" data-trim>
-{:+ {:app {"ctrl-c 0" [:lt.plugins.plugin0/start-plugin0]}
+{:+ {:app {"ctrl-c 0" [:dt.plugins.plugin0/start-plugin0]}
      }
 }
 </code></pre>
@@ -604,7 +653,7 @@ Anywhere in the app the key sequence <i>ctrl-c 0</i> will run the command
 <p>from src/lt/plugins:
 <br>namespace declaration:</p>
 <pre><code data-trim>
-(ns lt.plugins.plugin0
+(ns dt.plugins.plugin0
   (:require [lt.object :as object]
             [lt.objs.command :as cmd]
             [lt.objs.tabs :as tabs])
@@ -630,7 +679,11 @@ Anywhere in the app the key sequence <i>ctrl-c 0</i> will run the command
                 :name "plugin0"
                 :init (fn [this]
                         (plugin0-panel this)))
-
+</code></pre>
+			  </section>
+			  <section>
+			    <h4>Plugin Source (cont.)</h4>
+<pre><code data-trim>
 (cmd/command {:command ::start-plugin0
               :desc "plugin0: Raise window"
               :exec (fn []
@@ -638,6 +691,20 @@ Anywhere in the app the key sequence <i>ctrl-c 0</i> will run the command
                       (tabs/add-or-focus! (object/create ::plugin0.panel)))})
 </code></pre>
 			  </section>
+			</section>
+			<section>
+			  <h2>Critique</h2>
+			  <h3>Pro</h3>
+Works
+<br/>Small (the Light Table part!)
+<br/>Coherent
+<br/>Excellent for Interactive Web Development
+			  <h3>Con</h3>
+Lack of Documentation (esp. object-definition and object triggers)
+<br/>Fail Fast vs. Robust
+			</section>
+			<section>
+			  <h2>Thank you!</h2>
 			</section>
 		</div>
 	</div>
