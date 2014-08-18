@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">	
+<head>
+	<meta charset="utf-8">
+	<title>How to make a LightTable</title>
+	<meta name="author" content="(David Siegel)"/>
+	<link rel="stylesheet" href="css/reveal.min.css">
+<!--
+	<link rel="stylesheet" href="css/print/pdf.css">
+	<link rel="stylesheet" href="css/theme/default.css" id="theme">	
+-->
+
+	<link rel="stylesheet" href="css/theme/sky.css" id="theme">
+<!-- for highlight -->
+
+	<link rel="stylesheet" href="lib/css/zenburn.css">
+
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+<!-- turn on only for pdf export -->
+<!--
+    <script>
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css">' );
+    </script>
+-->
+
+	<!--Add support for earlier versions of Internet Explorer -->
+	<!--[if lt IE 9]>
+	<script src="lib/js/html5shiv.js"></script>
+	<![endif]-->
+<meta name="description" content="LightTable Architecture Overview">
+</head>
+
+<body>
+  <style type="text/css">
+    p { text-align: left; }
+  </style>
+
+	<!-- Wrap the entire slide show in a div using the "reveal" class. -->
+	<div class="reveal">
+		<!-- Wrap all slides in a single "slides" class -->
+		<div class="slides">
+
+			<!-- ALL SLIDES GO HERE -->
+			<!-- Each section element contains an individual slide -->
+			<section>
+			  <h1>How to Make a LightTable</h1>
+			  <h2>David Siegel</h2>
+			  <h3><a href="mailto:DesignTable@outlook.com">DesignTable@outlook.com</a></h3>
+			</section>
+			<section id="intro">
+			  <section>
+			    <h2>Introduction</h2>
+<p>
+Light Table is Chris Granger's open source IDE, written in ClojureScript.
+</p>
+
+http://www.lighttable.com/
+<p>
+Light Table's source can be found on github.com at:
+</p>
+https://github.com/LightTable/LightTable
+			  </section>
+			  <section>
+			    <h2>Light Table Source</h2>
+			    <h3>by the Numbers</h3>
+			    <table class="reveal">
+			      <tr>
+				<th>Directory</th>
+				<th>File count</th>
+			      </tr>
+			      <tr>
+				<td>lt</td>
+				<td>2</td>
+			      </tr>
+			      <tr>
+				<td>lt/objs</td>
+				<td>46</td>
+			      </tr>
+			      <tr>
+				<td>lt/objs/clients</td>
+				<td>4</td>
+			      </tr>
+			      <tr>
+				<td>lt/objs/editor</td>
+				<td>2</td>
+			      </tr>
+			      <tr>
+				<td>lt/objs/langs</td>
+				<td>2</td>
+			      </tr>
+			      <tr>
+				<td>lt/objs/sidebar</td>
+				<td>4</td>
+			      </tr>
+			      <tr>
+				<td>lt/plugins</td>
+				<td>4</td>
+			      </tr>
+			      <tr>
+				<td>lt/util</td>
+				<td>7</td>
+			      </tr>
+			    </table>
+			  </section>
+			  <section>
+			    <h2>First Impressions</h2>
+<p>The numbers point to a relatively small object-based system, and suggest
+a relatively flat structure.</p>
+<p>These impressions are true, but also misleading.</p>
+			  </section>
+			  <section>
+			    <h2>Second Impressions</h2>
+<p>The first step in building Light Table from source is downloading a 51 meg
+tarball. That tarball expands into 155 meg of node-webkit and plugins.</p>
+<p>The system is somewhat bigger than our first glance indicated.</p>
+<p>To understand it, we'll have to start with node-webkit.</p>
+			  </section>
+			</section>
+
+			<section id="part-1">
+			  <section>
+			    <h3>Part 1: Dance of the Matryoshkas</h3>
+			    <img src="images/Matryoshka-Dolls.jpg" alt="Matryoshka Dolls">
+			  </section>
+			  <section>
+			    <h2>Node.js</h2>
+<p>According to its website, nodejs.org, node.js is:</p>
+
+<blockquote>a platform built on Chrome's JavaScript runtime for easily building
+fast, scalable network applications. Node.js uses an event-driven,
+non-blocking I/O model that makes it lightweight and efficient,
+perfect for data-intensive real-time applications that run across
+distributed devices.</blockquote>
+<p>node.js is known for its single-threaded implementation, and the
+callback-heavy coding style it uses.</p>
+<p>The Light Table source code generally isolates its use of callbacks. For example, the files module exports a synchronous set of file operations.<p/>
+
+			  </section>
+			  <section data-state="diagram-nw">
+			    <h2>Node-Webkit</h2>
+			    <div id="diagram-nw">
+			  </section>
+			  <section data-state="diagram-nw-plugins">
+			    <h3>Node-Webkit supports plugins.</h3>
+			    <p>Light Table is a Node-Webkit plugin.</p>
+			    <p>Node-Webkit plugins can contain nested plugins</p>
+			    <div id="diagram-nw-plugins">
+			  </section>
+			  <section data-state="diagram-lighttable-plugins">
+			    <h3>LightTable has plugins.</h3>
+			    <p>Clojure support is provided by a Light Table plugin.</p>
+			    <div id="diagram-lighttable-plugins">
+			  </section>
+			  <section data-state="diagram-lighttable-user-plugins">
+			    <h3>LightTable has user plugins.</h3>
+			    <p>User plugins can override system plugins.</p>
+			    <div id="diagram-lighttable-user-plugins">
+			  </section>
+			  <section data-state="diagram-lighttable-clients">
+			    <h3>Light Table plugins can inject code into client processes.</h3>
+			    <div id="diagram-lighttable-clients">
+			  </section>
+
+			  <section>
+			    <h4>Node-Webkit starts from a manifest file: package.json</h4>
+<code><pre data-trim>
+    "name": "LightTable",
+    "main": "core/LightTable.html",
+    "js-flags": "--harmony",
+    "single-instance": true,
+    "webkit": {
+    	"plugin": true
+    },
+    "chromium-args" : "--disable-threaded-compositing ...",
+    "window": {
+    	"icon": "core/img/lticon.png",
+    	"width": 1024,
+    	"height": 700,
+    	"min_height": 400,
+    	"min_width": 400,
+    	"position": "center",
+    	"show":false,
+    	"toolbar": false,
+    	"frame": true
+    }
+}
+</pre></code>
+<p>The key "main" points to the starting webpage, <i>core/LightTable.html</i>.</p>
+			  </section>
+			  <section>
+			    <h2>Startup</h2>
+LightTable.html loads the libraries:
+<ul>
+<li>node_modules/lighttable/util/keyevents.js</li>
+<li>node_modules/lighttable/util/throttle.js</li>
+<li>node_modules/lighttable/bootstrap.js</li>
+</ul>
+<p>before initiating LightTable with:</p>
+<pre><code data-trim>
+lt.objs.app.init();
+</code></pre>
+<p>
+keyevents.js and throttle.js are small JavaScript libraries for controlling
+event processing. bootstrap.js is Light Table compiled.
+</p>
+			  </section>
+			  <section>
+			    <h2>Take Away</h2>
+<p>Within a deployed LightTable system, LightTable code can be found at:
+<ul>
+<li>LightTable_Home/core/node_modules/lighttable</li>
+<li>LightTable_Home/plugins</li>
+<li>LightTable_USERDIR/plugins</li>
+</ul>
+			  </section>
+			</section>
+
+			<section id="part-2">
+			  <section>
+			    <h2>Light Table Architecture</h2>
+			    <ul>
+			      <li>Object Definition</li>
+			      <li>Object</li>
+			      <li>Command</li>
+			      <li>Behavior</li>
+			      <li>Tag</li>
+			    </ul>
+			  </section>
+
+			  <section>
+			    <h2>Part 2: Objects, but not all the way down</h2>
+			  </section>
+
+			  <section>
+			    <h3>LightTable's Object Model</h3>
+<p>
+An object is a map wrapped in an atom. Objects are mutable, and change
+in response to events.</p>
+<p>Objects are defined by obj-defs (classes, more or less) that contain
+default values for the object, and an initialization function.</p>
+<p>These are generally high-level objects; many are singletons.</p>
+<p>From lt/obj/app.cljs:</p>
+<p>The object definition of <b>app</b>:</p>
+<code><pre data-trim>
+(object/object* ::app
+                :tags #{:app :window}
+                :delays 0
+                :init (fn [this]
+                        (ctx/in! :app this)))
+</pre></code>
+
+			  </section>
+			  <section>
+			    <h2>Object initialization</h2>
+<p>The creation of the singleton instance of <b>app</b>:</p>
+<code><pre data-trim>
+(def app (object/create ::app))
+</pre></code>
+<p>The object is created from the object-definition named <i>::app</i>.</p>
+<p>The name of the object-definition becomes the ::type of the object.</p>
+<p>An ::id is assigned.</p>
+<p>{delays 0} is added to the new object.</p>
+<p>The tags #{:app :window} are added to the new object.</p>
+<p>Some additional system-managed slots (:args, :behaviors, :listeners, :tags) are allocated.</p>
+			  </section>
+			  <section>
+			    <h2>Object initialization (cont.)</h2>
+
+<p>The init function is run; it may modify the new object.</p>
+<p>If the init function returns a vector, the crate library converts it into a DOM element node, and it is assigned to the :content slot. ::app does not return a content node.</p>
+			  </section>
+			</section>
+			<section id="part-3">
+			  <section>
+			    <h3>Part 3: Activating the Model</h3>
+			  </section>
+			  <section>
+			    <h3>Commands</h3>
+<p>From lt/objs/app.cljs:</p>
+
+<code><pre class="clojure" data-trim>
+(cmd/command {:command :window.new
+              :desc "Window: Open new window"
+              :exec (fn []
+                      (let [w (open-window)]))})
+</pre></code>
+
+<p>A command is, basically, a named function.
+Command functions bound to keys take no arguments. Commands invoked from code (cmd/exec!) can be passed arguments.</p>
+
+
+			  </section>
+			  <section>
+			    <h3>Behaviors</h3>
+<p>From lt/objs/app.cljs:</p>
+<code><pre class="clojure" data-trim>
+(behavior ::focus-class
+          :triggers #{:focus :show}
+          :reaction (fn [this]
+                      (dom/add-class (dom/$ :body) :active)
+                      (dom/remove-class (dom/$ :body) :inactive)))
+</pre></code>
+<p>When this behavior is triggered, the html class :active is added to the DOM's body element, and the class :inactive is removed.</p>
+
+<!--
+			    <div class="org-src-container">
+			      <pre class="src src-clojure">
+{<span style="color: #008b8b;">:+</span> {<span style="color: #008b8b;">:app</span> [(<span style="color: #008b8b;">:lt.objs.plugins/load-js</span> [<span style="color: #8b2252;">"plugin0_compiled.js"</span>])
+           (<span style="color: #008b8b;">:lt.objs.plugins/load-keymap</span> <span style="color: #8b2252;">"plugin0.keymap"</span>)]
+     <span style="color: #008b8b;">:plugin0.panel</span> [<span style="color: #008b8b;">:lt.plugins.plugin0/destroy-on-close</span>]}
+}
+			      </pre>
+			    </div>
+-->
+			  </section>
+
+			</section>
+			<section id="tags">
+			  <section>
+			    <h2>Tags</h2>
+			    <h3>The <b>Duct Tape</b> of Light Table?</h3>
+			  </section>
+			  <section>
+			    <h3>What's a Tag?</h3>
+<p>A tag is a ClojureScript keyword.</p>
+
+<p>Every object has 1 or more tags. An object starts with the tags of its object-definition.</p>
+
+<p>Each tag can be bound to many commands and many behaviors.</p>
+
+<p>Tags can be added to objects dynamically. When a tag is added to an object, all the commands and behaviors bound to the tag are now attached to the object.</p>
+
+<p>Similarly, tags can be dynamically removed from an object, resulting in removing the bound commands and behaviors.</p>
+			  </section>
+			  <section>
+			    <h3>Keymaps Bind Commands to Tags</h3>
+<p>from default.keymap:</p>
+<code><pre class="clojure" data-trim>
+{:+ {:app {"pmeta-r" [:refresh-connected-browser]
+           "pmeta-shift-n" [:window.new]
+</pre></code>
+<p>For objects tagged <b>:app</b>, the command :window.new is bound to the
+key sequence "pmeta-shift-n". Only the singleton app object carries the :app
+tag; it has global scope.</p>
+<p>These commands only apply in the document search input section of the sidebar:</p>
+<code><pre class="clojure" data-trim>
+{:+ {:sidebar.doc.search.input {"enter" [:docs.search.exec]
+                                "esc" [:docs.search.hide]}}
+</pre></code>
+
+			  </section>
+			  <section>
+			    <h3>Binding Behaviors to Tags</h3>
+<p>from default.behaviors:</p>
+<code><pre class="clojure" data-trim>
+{
+ :+
+ {:app [:lt.objs.clients.local/startup-with-local-client
+        :lt.objs.app/focus-class]}}
+</pre></code>
+
+			  </section>
+			  <section>
+			    <h3>Raising a Trigger</h3>
+<p>Events to triggers, see editor</p>
+			  </section>
+			</section>
+			<section>
+			  <section>
+			    <h2>Advanced Tags</h2>
+			    <h3>Variations on a Theme</h3>
+<p>dynamic tags, specificity</p>
+			  </section>
+			</section>
+			<section id="advanced features">
+			  <section>
+			    <h3>Some Advanced Features</h3>
+<p>reloading classes, :exclusive, :throttle, :debounce</p>
+			  </section>
+			</section>
+			<section>
+			  <section>
+			    <h2>Summary</h2>
+<p>An object-definition sets the starting values for its instances.</p>
+<p>Its name becomes their :type, and the return value of its init function
+becomes their :content.</p>
+			  </section>
+			  <section>
+<p>An object is a map wrapped in an atom, stored in a registry.</p>
+<p>Objects are not garbage collected, and must be explicitly destroyed.</p>
+
+<p>WeakMap support is available for node-webkit (https://github.com/rogerwang/node-webkit/issues/298), and Light Table might be able to use it. It would require revalidating the object model.</p>
+			    <h3>Reserved object keys</h3>
+::id
+::type
+:args
+:content
+:behaviors #{} :tags #{} :triggers [] :listeners {} ::type name :children {}
+
+:name "myName"
+:throttle msec
+:debounce msec
+			  </section>
+			  <section>
+			    <h4>Key Functions</h4>
+<p>The following namespace definition is conventional in the LightTable code base:</p>
+<code><pre data-trim>
+(ns myPlugin
+  (:require [lt.object :as object]
+            [lt.objs.command :as cmd])
+  (:require-macros [lt.macros :refer [behavior defui]]))
+</pre></code>
+			    <h4>Object Creation</h4>
+			    <table>
+			      <tr>
+				<td>object/object*</td>
+				<td>create an object definition</td>
+			      </tr>
+			      <tr><td>object/create</td></tr>
+			      <tr><td>behavior</td></tr>
+			      <tr><td>defui</td></tr>
+			      <tr><td>cmd/command</td></tr>
+			    </table>
+			    </section>
+			    <section>
+			      <h3>Other Functions</h3>
+			      <table>
+			      <tr><td>object/instances-by-type</td></tr>
+			      <tr>
+				object/raise
+			      </tr>
+			      <tr>
+				object/refresh!
+			      </tr>
+			      object/destroy!
+			      <tr>
+				object/merge!
+				object/update!
+				object/assoc-in!
+				do not refresh
+			      </tr>
+			      </table>
+			    </section>
+			  </section>
+			</section>
+			<section id="part-4">
+			  <section>
+			    <h3>Part 4: Follow the Flow of Control</h3>
+			  </section>
+			  <section>
+			    <h3>Searching Documentation</h3>
+			    <h4>Opening the Search sidebar</h4>
+from default.keymap:
+<code><pre data-trim>
+{:+ {:app {"ctrl-shift-d" [:docs.search.show]}
+     :sidebar.doc.search.input {"enter" [:docs.search.exec]
+                                "esc" [:docs.search.hide]}}}
+</pre></code>
+
+from plugin/doc.cljs
+<code><pre data-trim>
+(cmd/command {:command :docs.search.show
+              :desc "Docs: Search language docs"
+              :exec (fn [force?]
+                      (when doc-search
+                        (object/raise sidebar/rightbar :toggle doc-search {:force? force?})
+                        (object/raise doc-search :focus!))
+                      )})
+</pre></code>
+Raise the right sidebar and raise the search bar.
+			  </section>
+			</section>
+
+			<section id="part-5">
+			  <section>
+			    <h1>Part 5: Building Plugins</h1>
+			    <h3>LightTable is Optimized for Writing LightTable</h3>
+			  </section>
+
+			  <section>
+			    <blockquote>
+An expert is a person who has found out by his own painful experience all the mistakes that one can make in a very narrow field.
+
+-Niels Bohr
+			    </blockquote>
+			  </section>
+			  <section>
+			    <h1>Plugin0</h1>
+<p>Plugin0 is intended to be the simplest demonstration plugin.</p>
+
+<p>It displays some fixed content in a tab.</p>
+
+<p>To make it work, though, we have to implement all the basic plugin
+mechanics.</p>
+			  </section>
+
+			  <section>
+			    <h2>Location</h2>
+<p>You can find the location of Light Table's user plugins directory by
+evaluating:</p>
+
+<pre><code data-trim>
+(lt.objs.files/lt-user-dir "plugins")
+</code></pre>
+
+<p>
+On Linux: ~/.config/LightTable/plugins/
+<br/>It's different on Mac and Windows.
+</p>
+			  </section>
+			  <section>
+			    <h4>project.clj</h4>
+<pre><code data-trim>
+(defproject plugin0 "0.1.0-SNAPSHOT"
+  :description "plugin0: simplest LightTable plugin"
+  :dependencies [[org.clojure/clojure "1.5.1"]])
+</code></pre>
+
+<p>
+No cljsbuild directives!
+</p>
+
+<p>
+We will build the plugin from Light Table, which will just compile
+and combine the plugin ClojureScript code into "plugin0_complled.js".
+</p>
+
+<p>
+No libraries will be added to the compiled JavaScript. The compiled
+JavaScript will be loaded into LightTable, and have access to Light Table's
+copy of the support libraries (e.g., the ClojureScript runtime).
+</p>
+			  </section>
+			  <section>
+			    <h4>Manifest</h4>
+<p>
+plugin.edn or plugin.json
+</p>
+
+<p>
+This name is fixed.
+</p>
+
+<pre><code data-trim>
+ {:name "plugin0"
+ :version "0.0.1"
+ :author "DesignTable"
+ :source "https://github.com/DesignTable/plugin0"
+ :desc "Simplest plugin for Light Table"
+ :dependencies []
+ :behaviors "plugin0.behaviors"}
+</code></pre>
+
+<p>
+Note the key "behaviors".
+</p>
+
+<p>
+LightTable will load the referenced behavior file when it loads the plugin.
+</p>
+			  </section>
+
+			  <section>
+			    <h4>Behaviors</h4>
+<p>
+plugin0.behaviors -- referenced in the manifest
+</p>
+
+<pre><code class="clojure" data-trim>
+{:+ {:app [(:lt.objs.plugins/load-js ["plugin0_compiled.js"])
+           (:lt.objs.plugins/load-keymap "plugin0.keymap")]
+     :plugin0.panel [:lt.plugins.plugin0/destroy-on-close]}
+}
+</code></pre>
+<p>
+Every plugin should start by loading its compiled javascript and its keymap.
+</p>
+<p>
+The last line scopes the <i>destroy on close</i> behavior to the "class"
+<i>plugin0.panel</i>
+</p>
+			  </section>
+
+			  <section>
+			    <h4>Keymap</h4>
+<p>
+plugin0.keymap -- referenced in plugin0.behaviors
+</p>
+
+<pre><code class="clojure" data-trim>
+{:+ {:app {"ctrl-c 0" [:lt.plugins.plugin0/start-plugin0]}
+     }
+}
+</code></pre>
+<p>
+Anywhere in the app the key sequence <i>ctrl-c 0</i> will run the command
+<i>start-plugin0</i>
+</p>
+			  </section>
+			  <section>
+			    <h4>Plugin Source</h4>
+<p>from src/lt/plugins:
+<br>namespace declaration:</p>
+<pre><code data-trim>
+(ns lt.plugins.plugin0
+  (:require [lt.object :as object]
+            [lt.objs.command :as cmd]
+            [lt.objs.tabs :as tabs])
+  (:require-macros [lt.macros :refer [behavior defui]]))
+</code></pre>
+			  </section>
+			  <section>
+			    <h4>Plugin Source (cont.)</h4>
+
+<pre><code data-trim>
+(defui plugin0-panel [this]
+  [:h1 "Plugin0: Hello!"])
+
+; from browser
+(behavior ::destroy-on-close
+                  :triggers #{:close}
+                  :reaction (fn [this]
+                              ;(println "p0 destroy")
+                              (object/destroy! this)))
+
+(object/object* ::plugin0.panel
+                :tags [:plugin0.panel]
+                :name "plugin0"
+                :init (fn [this]
+                        (plugin0-panel this)))
+
+(cmd/command {:command ::start-plugin0
+              :desc "plugin0: Raise window"
+              :exec (fn []
+                      (println "start p0")
+                      (tabs/add-or-focus! (object/create ::plugin0.panel)))})
+</code></pre>
+			  </section>
+			</section>
+		</div>
+	</div>
+	<script src="lib/js/head.min.js"></script>
+	<script src="js/reveal.min.js"></script>
+	<script src="js/raphael.js"></script>
+	<script src="js/cljs_raphael.js"></script>
+	<script>
+		// Required, even if empty.
+		Reveal.initialize({
+		//width: 1366,
+		//height: 768,
+
+		//controls: false,
+		dependencies: [
+		// Syntax highlight for <code> elements
+            { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+            // Zoom in and out with Alt+click
+            { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } }
+		]
+		});
+
+	    (function() {
+	    var paper = Raphael('diagram-nw', 1000, 500);
+
+	    Reveal.addEventListener('diagram-nw', function(event) {
+	    cljs_raphael.nwdiagram.drawDiagram(paper,
+	    ["nw"]);
+	    });
+	    }());
+
+	    (function() {
+	    var paper = Raphael('diagram-nw-plugins', 1000, 500);
+
+	    Reveal.addEventListener('diagram-nw-plugins', function(event) {
+	    cljs_raphael.nwdiagram.drawDiagram(paper,
+	    ["nw", "np"]);
+	    });
+	    }());
+
+	    (function() {
+	    var paper = Raphael('diagram-lighttable-plugins', 1000, 500);
+
+	    Reveal.addEventListener('diagram-lighttable-plugins', function(event) {
+	    cljs_raphael.nwdiagram.drawDiagram(paper,
+	    ["nw", "np", "lps"]);
+	    });
+	    }());
+
+	    (function() {
+	    var paper = Raphael('diagram-lighttable-user-plugins', 1000, 500);
+
+	    Reveal.addEventListener('diagram-lighttable-user-plugins', function(event) {
+	    cljs_raphael.nwdiagram.drawDiagram(paper,
+	    ["nw", "np", "lps", "lpu"]);
+	    });
+	    }());
+
+	    (function() {
+	    var paper = Raphael('diagram-lighttable-clients', 1000, 500);
+
+	    Reveal.addEventListener('diagram-lighttable-clients', function(event) {
+	    cljs_raphael.nwdiagram.drawDiagram(paper,
+	    ["nw", "np", "lps", "lpu", "lpc"]);
+	    });
+	    }());
+
+	</script>
+</body>
+</html>
